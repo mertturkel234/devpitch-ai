@@ -10,7 +10,7 @@ const HEADERS: Record<string, string> = {
 };
 
 // Opsiyonel: .env dosyasına GITHUB_TOKEN eklenirse limit 60/saat'ten 5000/saat'e çıkar.
-if (process.env.GITHUB_TOKEN) {
+if (process.env.GITHUB_TOKEN && !process.env.GITHUB_TOKEN.includes("dummy")) {
   HEADERS.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
 }
 
