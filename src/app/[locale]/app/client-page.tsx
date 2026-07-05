@@ -40,6 +40,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
   const [jobPost, setJobPost] = useState("");
   const [language, setLanguage] = useState("İngilizce");
   const [tone, setTone] = useState("Profesyonel");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [profile, setProfile] = useState<GithubProfile | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -79,7 +80,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
       setProfile(profileResult.data);
       setStage("generating");
 
-      const letterResult = await generateCoverLetter(profileResult.data, jobPost, language, tone);
+      const letterResult = await generateCoverLetter(profileResult.data, jobPost, language, tone, customPrompt);
 
       if (!letterResult.success) {
         toast.error(letterResult.error);
@@ -166,6 +167,17 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
                       <option value="Kısa ve Öz">Kısa ve Öz</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-prompt">Ek Yönergeler (Opsiyonel)</Label>
+                  <Textarea
+                    id="custom-prompt"
+                    placeholder="örn: 'Şu repomdaki React becerilerimi özellikle vurgula' veya 'Mektup kısa olsun'"
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    className="min-h-16 resize-none"
+                  />
                 </div>
 
                 <Button

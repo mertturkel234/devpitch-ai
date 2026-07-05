@@ -15,7 +15,13 @@ function getSystemPrompt(language: string, tone: string) {
   return `Sen profesyonel bir teknik işe alım ve kariyer danışmanısın. Verilen GitHub profil verilerini ve hedef iş ilanını analiz et. Geliştiricinin GitHub'daki gerçek projelerinden örnekler vererek, iş ilanındaki şartları nasıl karşıladığını anlatan, ${language} dilinde ve ${tone} bir tonda profesyonel bir Cold Email / Cover Letter yaz.`;
 }
 
-function buildUserPrompt(profile: GithubProfile, jobPost: string, language: string, tone: string): string {
+function buildUserPrompt(
+  profile: GithubProfile,
+  jobPost: string,
+  language: string,
+  tone: string,
+  customPrompt?: string
+): string {
   const repoLines = profile.topRepos
     .map(
       (r) =>
@@ -25,6 +31,10 @@ function buildUserPrompt(profile: GithubProfile, jobPost: string, language: stri
     )
     .join("\n");
 
+  const customInstruction = customPrompt?.trim()
+    ? `\nKULLANICININ ÖZEL TALİMATLARI:\n${customPrompt}\n`
+    : "";
+
   return `GITHUB PROFİLİ
 Kullanıcı adı: ${profile.username}
 İsim: ${profile.name ?? "belirtilmemiş"}
@@ -33,18 +43,21 @@ Bio: ${profile.bio ?? "belirtilmemiş"}
 
 EN POPÜLER PROJELER
 ${repoLines}
-
+${customInstruction}
 HEDEF İŞ İLANI
 ${jobPost}
 
 Yukarıdaki verileri kullanarak, sistem talimatında belirtilen formatta ${language} dilinde ve ${tone} bir tonda Cold Email / Cover Letter yaz. Markdown formatı kullanabilirsin (kısa paragraflar, gerekirse madde işaretleri). Uydurma proje veya deneyim ekleme; sadece verilen repoları referans al.`;
 }
 
+import { marked } from "marked";
+
 export async function generateCoverLetter(
   profile: GithubProfile,
   jobPost: string,
   language: string = "İngilizce",
-  tone: string = "Profesyonel ve İkna Edici"
+  tone: string = "Profesyonel ve İkna Edici",
+  customPrompt?: string
 ): Promise<GeneratePitchResult> {
   if (!jobPost.trim()) {
     return { success: false, error: "Lütfen bir iş ilanı metni girin." };
@@ -81,14 +94,16 @@ export async function generateCoverLetter(
         temperature: 0.7,
         messages: [
           { role: "system", content: getSystemPrompt(language, tone) },
-          { role: "user", content: buildUserPrompt(profile, jobPost, language, tone) },
+          { role: "user", content: buildUserPrompt(profile, jobPost, language, tone, customPrompt) },
         ],
       });
-      content = completion.choices[0]?.message?.content;
+      const rawLetter = completion.choices[0]?.message?.content || "Mektup oluşturulamadı.";
+      content = await marked.parse(rawLetter);
     } catch (openAiErr: any) {
       if (openAiErr instanceof OpenAI.APIError && openAiErr.status === 429) {
         // Test amaçlı sahte (dummy) içerik
-        content = `*(Sistem Notu: Bu mektup, OpenAI hesabınızda bakiye bulunmadığı için test amaçlı yer tutucu (dummy) olarak üretilmiştir.)*\n\nSayın İlgili,\n\nİlanınızda belirttiğiniz pozisyon için yeteneklerimin ve GitHub üzerindeki çalışmalarımın büyük bir değer yaratacağına inanıyorum.\n\nÖzellikle **${profile.topRepos[0]?.name || "projelerim"}** üzerinde çalışırken edindiğim tecrübeler, aradığınız niteliklerle tam olarak uyuşuyor. ${profile.languages.length > 0 ? `Ayrıca **${profile.languages.join(", ")}** dillerindeki pratik bilgim sayesinde ekibinize hızla değer katabilirim.` : ""}\n\nGitHub profilimi detaylı incelemek isterseniz: [${profile.username}](${profile.profileUrl})\n\nDetayları görüşmek üzere bir mülakat ayarlamaktan memnuniyet duyarım.\n\nSaygılarımla,\n**${profile.name || profile.username}**`;
+        const dummyLetter = `*(Sistem Notu: Bu mektup, OpenAI hesabınızda bakiye bulunmadığı için test amaçlı yer tutucu (dummy) olarak üretilmiştir.)*\n\nSayın İlgili,\n\nİlanınızda belirttiğiniz pozisyon için yeteneklerimin ve GitHub üzerindeki çalışmalarımın büyük bir değer yaratacağına inanıyorum.\n\nÖzellikle **${profile.topRepos[0]?.name || "projelerim"}** üzerinde çalışırken edindiğim tecrübeler, aradığınız niteliklerle tam olarak uyuşuyor. ${profile.languages.length > 0 ? `Ayrıca **${profile.languages.join(", ")}** dillerindeki pratik bilgim sayesinde ekibinize hızla değer katabilirim.` : ""}\n\nGitHub profilimi detaylı incelemek isterseniz: [${profile.username}](${profile.profileUrl})\n\nDetayları görüşmek üzere bir mülakat ayarlamaktan memnuniyet duyarım.\n\nSaygılarımla,\n**${profile.name || profile.username}**`;
+        content = await marked.parse(dummyLetter);
       } else {
         throw openAiErr;
       }
