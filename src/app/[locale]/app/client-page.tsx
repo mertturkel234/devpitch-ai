@@ -29,6 +29,7 @@ import { CoverLetterCard } from "@/components/cover-letter-card";
 import { PaywallModal } from "@/components/paywall-modal";
 import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useSession } from "next-auth/react";
 import type { GithubProfile } from "@/types/github";
 
@@ -276,6 +277,7 @@ function DashboardHeader({ credits }: { credits: number }) {
           >
             {credits} kredi
           </Badge>
+          <LanguageSwitcher />
           <ThemeToggle />
           <UserNav />
         </div>

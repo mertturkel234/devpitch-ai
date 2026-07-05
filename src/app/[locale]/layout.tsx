@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { MotionProvider } from "@/components/motion/motion-provider";
 
@@ -45,22 +45,30 @@ export const metadata: Metadata = {
   },
 };
 
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+  params: { locale }
+}: {
   children: React.ReactNode;
-}>) {
+  params: { locale: string };
+}) {
+  const messages = await getMessages();
+
   return (
-    <html lang="tr" className="h-full antialiased" suppressHydrationWarning>
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Providers>
-          <MotionProvider>
-            {children}
-            <Toaster position="bottom-right" />
-          </MotionProvider>
-        </Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers>
+            <MotionProvider>
+              {children}
+              <Toaster position="bottom-right" />
+            </MotionProvider>
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

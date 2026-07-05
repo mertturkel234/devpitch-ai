@@ -7,6 +7,7 @@ import { HeroContent } from "@/components/landing/hero-content";
 import { Reveal } from "@/components/motion/reveal";
 import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function Home() {
   return (
@@ -104,6 +105,7 @@ function SiteHeader() {
           >
             Dashboard
           </Link>
+          <LanguageSwitcher />
           <ThemeToggle />
           <UserNav />
         </nav>
