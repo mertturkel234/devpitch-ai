@@ -73,17 +73,26 @@ export async function generateCoverLetter(
 
   try {
     const client = new OpenAI({ apiKey });
+    let content: string | null | undefined = null;
 
-    const completion = await client.chat.completions.create({
-      model: MODEL,
-      temperature: 0.7,
-      messages: [
-        { role: "system", content: getSystemPrompt(language, tone) },
-        { role: "user", content: buildUserPrompt(profile, jobPost, language, tone) },
-      ],
-    });
-
-    const content = completion.choices[0]?.message?.content;
+    try {
+      const completion = await client.chat.completions.create({
+        model: MODEL,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: getSystemPrompt(language, tone) },
+          { role: "user", content: buildUserPrompt(profile, jobPost, language, tone) },
+        ],
+      });
+      content = completion.choices[0]?.message?.content;
+    } catch (openAiErr: any) {
+      if (openAiErr instanceof OpenAI.APIError && openAiErr.status === 429) {
+        // Test amaçlı sahte (dummy) içerik
+        content = `*(Sistem Notu: Bu mektup, OpenAI hesabınızda bakiye bulunmadığı için test amaçlı yer tutucu (dummy) olarak üretilmiştir.)*\n\nSayın İlgili,\n\nİlanınızda belirttiğiniz pozisyon için yeteneklerimin ve GitHub üzerindeki çalışmalarımın büyük bir değer yaratacağına inanıyorum.\n\nÖzellikle **${profile.topRepos[0]?.name || "projelerim"}** üzerinde çalışırken edindiğim tecrübeler, aradığınız niteliklerle tam olarak uyuşuyor. ${profile.languages.length > 0 ? `Ayrıca **${profile.languages.join(", ")}** dillerindeki pratik bilgim sayesinde ekibinize hızla değer katabilirim.` : ""}\n\nGitHub profilimi detaylı incelemek isterseniz: [${profile.username}](${profile.profileUrl})\n\nDetayları görüşmek üzere bir mülakat ayarlamaktan memnuniyet duyarım.\n\nSaygılarımla,\n**${profile.name || profile.username}**`;
+      } else {
+        throw openAiErr;
+      }
+    }
 
     if (!content) {
       return {
