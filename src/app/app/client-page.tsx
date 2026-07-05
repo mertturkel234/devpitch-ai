@@ -28,6 +28,7 @@ import { generateCoverLetter } from "@/app/actions/generate-pitch";
 import { CoverLetterCard } from "@/components/cover-letter-card";
 import { PaywallModal } from "@/components/paywall-modal";
 import { UserNav } from "@/components/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession } from "next-auth/react";
 import type { GithubProfile } from "@/types/github";
 
@@ -275,6 +276,7 @@ function DashboardHeader({ credits }: { credits: number }) {
           >
             {credits} kredi
           </Badge>
+          <ThemeToggle />
           <UserNav />
         </div>
       </div>

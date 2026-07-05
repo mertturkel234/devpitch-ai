@@ -3,6 +3,21 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --background: #ffffff;
+  --surface: #fafafa;
+  --surface-hover: #f4f4f5;
+  --border-subtle: #e4e4e7;
+  --foreground: #09090b;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  --accent-dim: #2563eb1a;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --radius: 0.625rem;
+}
+
+.dark {
   --background: #0A0A0B;
   --surface: #131316;
   --surface-hover: #1A1A1E;
@@ -14,7 +29,6 @@
   --accent-dim: #5B8DEF1A;
   --success: #4ADE80;
   --danger: #F87171;
-  --radius: 0.625rem;
 }
 
 @theme inline {

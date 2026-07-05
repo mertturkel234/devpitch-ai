@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr" className="h-full antialiased dark" suppressHydrationWarning>
+    <html lang="tr" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>
           <MotionProvider>

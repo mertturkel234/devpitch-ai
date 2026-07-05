@@ -6,6 +6,7 @@ import { PitchFlow } from "@/components/landing/pitch-flow";
 import { HeroContent } from "@/components/landing/hero-content";
 import { Reveal } from "@/components/motion/reveal";
 import { UserNav } from "@/components/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
@@ -103,6 +104,7 @@ function SiteHeader() {
           >
             Dashboard
           </Link>
+          <ThemeToggle />
           <UserNav />
         </nav>
       </div>
