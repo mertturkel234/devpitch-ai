@@ -30,18 +30,8 @@ export function PaywallModal({
 
   async function handleUpgrade() {
     setLoading(true);
-    try {
-      const res = await createCheckoutSession();
-      if (res.success && res.url) {
-        window.location.href = res.url;
-      } else {
-        toast.error(res.error || "Ödeme oturumu başlatılamadı.");
-      }
-    } catch {
-      toast.error("Beklenmeyen bir hata oluştu.");
-    } finally {
-      setLoading(false);
-    }
+    // Modal üzerinden direkt Checkout yerine, fiyatlandırma sayfasına yönlendiriyoruz
+    window.location.href = "/pricing";
   }
 
   return (

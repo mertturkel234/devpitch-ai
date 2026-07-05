@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevPitch.ai
 
-## Getting Started
+GitHub profilinizi ve hedef iş ilanını analiz eden yapay zeka, yurt dışı şirketlere gönderilecek profesyonel bir cover letter (ön yazı) hazırlar.
 
-First, run the development server:
+## Özellikler
+- GitHub repolarının ve LinkedIn PDF geçmişinin analiz edilmesi.
+- OpenAI GPT-4o-mini entegrasyonu.
+- Stripe ile Kredi tabanlı abonelik ve tek seferlik ödeme altyapısı.
+- Kanban Board ile iş başvurularını sürükle-bırak ile takip edebilme.
+- TipTap editörü ve "Modern/Klasik/Yaratıcı" mektup şablonları.
+- Uluslararasılaştırma (i18n) desteği (Türkçe, İngilizce).
+- next-themes ile Aydınlık / Karanlık Mod desteği.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Geliştirme (Local)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Depoyu klonlayın ve bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. `.env.local` dosyasını oluşturun ve gerekli değişkenleri ekleyin (aşağıya bakın).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Veritabanını oluşturun:
+   ```bash
+   npx prisma db push
+   ```
 
-## Learn More
+4. Geliştirme sunucusunu başlatın:
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+## Vercel Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Uygulamayı Vercel üzerinde yayına almak için aşağıdaki environment variable'ların tamamının ayarlanması gerekmektedir:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Environment Variables
 
-## Deploy on Vercel
+| Değişken Adı | Açıklama |
+| --- | --- |
+| `DATABASE_URL` | Prisma için veritabanı URL'si (Production için PostgreSQL veya PlanetScale önerilir, şu an SQLite kullanılıyor. Vercel'e deploy için Neon/Supabase PostgreSQL URL'si alıp `schema.prisma`'yı `postgresql` olarak güncellemeniz gerekebilir.) |
+| `NEXTAUTH_URL` | Uygulamanızın yayınlandığı URL (Örn: `https://devpitch.ai`) |
+| `NEXTAUTH_SECRET` | Rastgele oluşturulmuş bir secret key. (Örn: `openssl rand -base64 32` ile üretebilirsiniz) |
+| `GITHUB_ID` | GitHub OAuth uygulamanızın Client ID'si |
+| `GITHUB_SECRET` | GitHub OAuth uygulamanızın Client Secret'ı |
+| `OPENAI_API_KEY` | OpenAI API anahtarınız (gpt-4o-mini erişimi olmalı) |
+| `STRIPE_SECRET_KEY` | Stripe gizli anahtarınız (`sk_test_...` veya `sk_live_...`) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Webhook imza anahtarınız (`whsec_...`) |
+| `NEXT_PUBLIC_APP_URL` | Stripe başarılı ödeme sonrası dönüş URL'si için (Örn: `https://devpitch.ai`) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Vercel'de Dikkat Edilmesi Gerekenler
+- Projenin şu anki veritabanı sağlayıcısı **SQLite**'tır (`prisma/schema.prisma`).
+- SQLite, sunucusuz (serverless) ortamlarda kalıcı bir dosya sistemi gerektirdiğinden, Vercel'e atarken veriler sıfırlanabilir veya çalışmayabilir.
+- Yayına almadan önce Prisma şemasında provider'ı `"postgresql"` olarak değiştirip, [Neon](https://neon.tech/) veya [Supabase](https://supabase.com/) gibi ücretsiz bir PostgreSQL veritabanı bağlamanız önerilir.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Lisans
+MIT

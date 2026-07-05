@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -30,6 +30,7 @@ import { PaywallModal } from "@/components/paywall-modal";
 import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { PdfUploader } from "@/components/pdf-uploader";
 import { useSession } from "next-auth/react";
 import type { GithubProfile } from "@/types/github";
 
@@ -41,6 +42,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
   const [language, setLanguage] = useState("İngilizce");
   const [tone, setTone] = useState("Profesyonel");
   const [customPrompt, setCustomPrompt] = useState("");
+  const [linkedinData, setLinkedinData] = useState<string>("");
   const [profile, setProfile] = useState<GithubProfile | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -80,7 +82,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
       setProfile(profileResult.data);
       setStage("generating");
 
-      const letterResult = await generateCoverLetter(profileResult.data, jobPost, language, tone, customPrompt);
+      const letterResult = await generateCoverLetter(profileResult.data, jobPost, language, tone, customPrompt, linkedinData);
 
       if (!letterResult.success) {
         toast.error(letterResult.error);
@@ -137,6 +139,13 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
                     onChange={(e) => setJobPost(e.target.value)}
                     className="min-h-32"
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <PdfUploader 
+                    onUploadSuccess={(text) => setLinkedinData(text)} 
+                    onClear={() => setLinkedinData("")} 
                   />
                 </div>
 
@@ -283,6 +292,9 @@ function DashboardHeader({ credits }: { credits: number }) {
           </Link>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/pricing" className="text-sm font-medium hover:underline text-muted hover:text-foreground mr-2">
+            Paketler
+          </Link>
           <Badge
             variant={credits === 0 ? "outline" : "secondary"}
             className={cn("font-mono", credits === 0 && "border-danger/40 text-danger")}

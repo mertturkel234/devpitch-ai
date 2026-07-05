@@ -12,7 +12,7 @@ export type GeneratePitchResult =
 const MODEL = "gpt-4o-mini";
 
 function getSystemPrompt(language: string, tone: string) {
-  return `Sen profesyonel bir teknik işe alım ve kariyer danışmanısın. Verilen GitHub profil verilerini ve hedef iş ilanını analiz et. Geliştiricinin GitHub'daki gerçek projelerinden örnekler vererek, iş ilanındaki şartları nasıl karşıladığını anlatan, ${language} dilinde ve ${tone} bir tonda profesyonel bir Cold Email / Cover Letter yaz.`;
+  return `Sen profesyonel bir teknik işe alım ve kariyer danışmanısın. Verilen GitHub profil verilerini, (varsa) LinkedIn özgeçmiş verilerini ve hedef iş ilanını analiz et. Adayın projelerinden ve iş deneyimlerinden uygun örnekler vererek, iş ilanındaki şartları nasıl karşıladığını anlatan, ${language} dilinde ve ${tone} bir tonda profesyonel bir Cold Email / Cover Letter yaz.`;
 }
 
 function buildUserPrompt(
@@ -20,7 +20,8 @@ function buildUserPrompt(
   jobPost: string,
   language: string,
   tone: string,
-  customPrompt?: string
+  customPrompt?: string,
+  linkedinData?: string
 ): string {
   const repoLines = profile.topRepos
     .map(
@@ -35,6 +36,10 @@ function buildUserPrompt(
     ? `\nKULLANICININ ÖZEL TALİMATLARI:\n${customPrompt}\n`
     : "";
 
+  const linkedinSection = linkedinData?.trim()
+    ? `\nLINKEDIN ÖZGEÇMİŞİ (PDF İÇERİĞİ)\n${linkedinData}\n`
+    : "";
+
   return `GITHUB PROFİLİ
 Kullanıcı adı: ${profile.username}
 İsim: ${profile.name ?? "belirtilmemiş"}
@@ -43,11 +48,11 @@ Bio: ${profile.bio ?? "belirtilmemiş"}
 
 EN POPÜLER PROJELER
 ${repoLines}
-${customInstruction}
+${linkedinSection}${customInstruction}
 HEDEF İŞ İLANI
 ${jobPost}
 
-Yukarıdaki verileri kullanarak, sistem talimatında belirtilen formatta ${language} dilinde ve ${tone} bir tonda Cold Email / Cover Letter yaz. Markdown formatı kullanabilirsin (kısa paragraflar, gerekirse madde işaretleri). Uydurma proje veya deneyim ekleme; sadece verilen repoları referans al.`;
+Yukarıdaki verileri kullanarak, sistem talimatında belirtilen formatta ${language} dilinde ve ${tone} bir tonda Cold Email / Cover Letter yaz. Markdown formatı kullanabilirsin (kısa paragraflar, gerekirse madde işaretleri). Uydurma proje veya deneyim ekleme; sadece sağlanan verileri referans al.`;
 }
 
 import { marked } from "marked";
@@ -66,7 +71,8 @@ export async function generateCoverLetter(
   jobPost: string,
   language: string = "İngilizce",
   tone: string = "Profesyonel ve İkna Edici",
-  customPrompt?: string
+  customPrompt?: string,
+  linkedinData?: string
 ): Promise<GeneratePitchResult> {
   if (!jobPost.trim()) {
     return { success: false, error: "Lütfen bir iş ilanı metni girin." };
@@ -105,7 +111,7 @@ export async function generateCoverLetter(
         temperature: 0.7,
         messages: [
           { role: "system", content: getSystemPrompt(language, tone) },
-          { role: "user", content: buildUserPrompt(profile, jobPost, language, tone, customPrompt) },
+          { role: "user", content: buildUserPrompt(profile, jobPost, language, tone, customPrompt, linkedinData) },
         ],
         response_format: zodResponseFormat(CoverLetterSchema, "cover_letter_result")
       });
