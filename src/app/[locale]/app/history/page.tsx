@@ -1,7 +1,7 @@
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { CoverLetterCard } from "@/components/cover-letter-card";
+import { KanbanBoard } from "@/components/kanban-board";
 
 export default async function HistoryPage() {
   const session = await auth();
@@ -10,47 +10,32 @@ export default async function HistoryPage() {
     redirect("/");
   }
 
-  const history = await prisma.coverLetter.findMany({
+  const applications = await prisma.application.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
+    include: {
+      coverLetter: {
+        select: {
+          id: true,
+          content: true,
+          jobPost: true,
+        }
+      }
+    }
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="mx-auto max-w-[1400px] px-6 py-12 h-full flex flex-col">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Geçmiş Başvurularınız</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">İş Başvuruları Pano</h1>
         <p className="mt-1.5 text-sm text-muted">
-          Daha önce oluşturduğunuz kapak mektupları.
+          Hazırladığınız cover letter'lar ve başvuru durumlarınızı sürükle-bırak ile takip edin.
         </p>
       </div>
 
-      {history.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center py-16 border rounded-xl border-dashed">
-          <h3 className="font-medium text-foreground mb-1.5">Henüz mektup yok</h3>
-          <p className="text-sm text-muted max-w-xs">
-            Önce bir cover letter oluşturun, ardından burada listelenecektir.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-6">
-          {history.map((letter) => (
-            <div key={letter.id} className="border rounded-xl p-6 bg-surface">
-              <div className="flex justify-between items-start mb-4 border-b pb-4">
-                <div>
-                  <div className="font-medium">Hedef İlan:</div>
-                  <div className="text-sm text-muted line-clamp-2 max-w-2xl mt-1">
-                    {letter.jobPost}
-                  </div>
-                </div>
-                <div className="text-xs text-muted">
-                  {letter.createdAt.toLocaleDateString("tr-TR")}
-                </div>
-              </div>
-              <CoverLetterCard content={letter.content} />
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="flex-1 min-h-0">
+        <KanbanBoard initialApplications={applications} />
+      </div>
     </div>
   );
 }

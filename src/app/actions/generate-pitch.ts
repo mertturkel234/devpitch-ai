@@ -52,6 +52,15 @@ Yukarıdaki verileri kullanarak, sistem talimatında belirtilen formatta ${langu
 
 import { marked } from "marked";
 
+import { zodResponseFormat } from "openai/helpers/zod";
+import { z } from "zod";
+
+const CoverLetterSchema = z.object({
+  companyName: z.string().describe("İş ilanından çıkarılan şirket adı. Bulunamazsa 'Belirtilmemiş' yaz."),
+  jobTitle: z.string().describe("İş ilanından çıkarılan pozisyon adı. Bulunamazsa 'Genel Başvuru' yaz."),
+  letterContent: z.string().describe("Oluşturulan mektup (Markdown formatında).")
+});
+
 export async function generateCoverLetter(
   profile: GithubProfile,
   jobPost: string,
@@ -86,7 +95,9 @@ export async function generateCoverLetter(
 
   try {
     const client = new OpenAI({ apiKey });
-    let content: string | null | undefined = null;
+    let content: string | null = null;
+    let company = "Belirtilmemiş";
+    let title = "Genel Başvuru";
 
     try {
       const completion = await client.chat.completions.create({
@@ -96,8 +107,14 @@ export async function generateCoverLetter(
           { role: "system", content: getSystemPrompt(language, tone) },
           { role: "user", content: buildUserPrompt(profile, jobPost, language, tone, customPrompt) },
         ],
+        response_format: zodResponseFormat(CoverLetterSchema, "cover_letter_result")
       });
-      const rawLetter = completion.choices[0]?.message?.content || "Mektup oluşturulamadı.";
+      
+      const parsedContent = JSON.parse(completion.choices[0]?.message?.content || "{}");
+      const rawLetter = parsedContent.letterContent || "Mektup oluşturulamadı.";
+      company = parsedContent.companyName || company;
+      title = parsedContent.jobTitle || title;
+      
       content = await marked.parse(rawLetter);
     } catch (openAiErr: any) {
       if (openAiErr instanceof OpenAI.APIError && openAiErr.status === 429) {
@@ -116,21 +133,34 @@ export async function generateCoverLetter(
       };
     }
 
+    const userId = session.user.id;
+
     // Başarılı olursa krediyi düş ve geçmişi kaydet
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: session.user.id },
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
         data: { credits: { decrement: 1 } },
-      }),
-      prisma.coverLetter.create({
+      });
+      
+      const coverLetter = await tx.coverLetter.create({
         data: {
-          userId: session.user.id,
+          userId,
           username: profile.username,
           jobPost,
           content,
         },
-      }),
-    ]);
+      });
+
+      await tx.application.create({
+        data: {
+          userId,
+          companyName: company,
+          jobTitle: title,
+          status: "APPLIED",
+          coverLetterId: coverLetter.id,
+        }
+      });
+    });
 
     return { success: true, data: content };
   } catch (err) {

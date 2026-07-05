@@ -4,7 +4,7 @@ import { auth } from "@/app/api/auth/[...nextauth]/route";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2026-06-24.dahlia",
 });
 
 export async function createCheckoutSession() {
